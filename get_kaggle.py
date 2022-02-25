@@ -13,14 +13,24 @@ json.encoder.FLOAT_REPR = lambda o: format(o, '.5f')
 
 parameters = r"""PARAMETERS"""
 
+def make_curl_command(args, request_type, request_payload):
+    if (request_type == "page"):
+        page = request_payload['page']
+        print(page)
+        payload = r"""--data-raw '{"competitionId":%s,"sortBy":"RANK","filter":"","hideUnrankedTeams":true,"page":%s}' \
+        """ % (args.competition_id, page)
+        return "curl {}{} {} > {}".format(args.page_prefix, parameters, payload, os.path.join(args.page_path, f'{page}.json'))
+    if (request_type == "single"):
+        team_id = request_payload['team_id']
+        payload = r"""--data-raw '{"teamId":%s,"competitionId":%s}' \
+            """ % (team_id, args.competition_id)
+        return "curl {}{} {} > {}".format(args.single_prefix, parameters, payload, os.path.join(args.single_path, '{}.json'.format(team_id)))
 
 def get_pages(args):
     os.makedirs(args.page_path, exist_ok=True)
-    for i in range(41):
-        command = ("curl \'{}{}\' {} > {}"
-                   .format(args.page_prefix, i + 1, parameters, os.path.join(args.page_path, f'{i + 1}.json')))
+    for i in range(25):
+        command = make_curl_command(args, "page", {"page": i+1})
         os.system(command)
-
 
 def get_student_data(args):
     os.makedirs(args.single_path, exist_ok=True)
@@ -32,7 +42,7 @@ def get_student_data(args):
         print(str(page_file))
         with open(page_file, 'r') as f:
             page = json.load(f)
-        for team in page['teamsList']:
+        for team in page.get('teamsList', []):
             team_id = team['id']
             teamid2name[team_id] = team['name']
             student_id = get_student_id(team['name'])
@@ -41,8 +51,7 @@ def get_student_data(args):
                 print(student_id)
                 leaderboard[student_id] = {'public': float(
                     team['publicScore']), 'private': float(team['privateScore'])}
-            command = "curl \'{}{}\' {} > {}".format(args.single_prefix, team_id, parameters, os.path.join(
-                args.single_path, '{}.json'.format(team_id)))
+            command = make_curl_command(args, 'single', {"team_id": team_id})
             os.system(command)
     with open(os.path.join(args.output_path, 'leaderboard.json'), 'w') as f:
         json.dump(leaderboard, f)
@@ -57,15 +66,15 @@ def get_selected_scores(args):
         student_id = os.path.splitext(student_file)[0]
         final_submission = []
         with open(os.path.join(args.single_path, student_file), 'r') as f:
-            student_data = json.load(f)
+            student_data = json.load(f)['teamSubmissions']
         for submission in student_data:
-            if submission['isSelected']:
+            if submission.get('isSelected', False):
                 final_submission.append({'public': float(
                     submission['publicScore']), 'private': float(submission['privateScore'])})
 
         if len(final_submission) < 2:
             ns_sub = [x for x in student_data if (
-                not x['isSelected']) and (x['status'] != 'error')]
+                not x.get('isSelected', False)) and (x['status'] != 'ERROR')]
             ns_sub = sorted(ns_sub, key=lambda k: float(k['publicScore']))
             for i in range(min(len(ns_sub), 2 - len(final_submission))):
                 final_submission.append({'public': float(
@@ -93,8 +102,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     args.page_path = os.path.join(args.output_path, 'pages')
     args.single_path = os.path.join(args.output_path, 'single_student')
-    args.page_prefix = 'https://www.kaggle.com/c/{}/teams.json?sortBy=rank&filter=&hideUnrankedTeams=true&page='.format(
-        args.competition_id)
-    args.single_prefix = 'https://www.kaggle.com/c/{}/team-submissions.json?teamId='.format(
-        args.competition_id)
+    args.page_prefix = r"""https://www.kaggle.com/api/i/competitions.legacy.LegacyCompetitionService/ListTeams\
+    """
+    args.single_prefix = r"""https://www.kaggle.com/api/i/competitions.legacy.LegacySubmissionService/ListTeamSubmissions\
+    """
     main(args)
