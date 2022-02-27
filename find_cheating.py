@@ -11,10 +11,10 @@ from collect_score import get_student_id
 
 def get_student_submissions(path):
     with open(path, 'r') as fp:
-        subm_list = json.load(fp)
+        subm_list = json.load(fp)['teamSubmissions']
         scores = []
         for subm in subm_list:
-            if subm['publicScore'] is None or subm['publicScore'] is None:
+            if subm.get('publicScore', None) is None or subm.get('publicScore', None) is None:
                 continue
             publ_score = subm['publicScore'].ljust(8, '0')
             priv_score = subm['privateScore'].ljust(8, '0')

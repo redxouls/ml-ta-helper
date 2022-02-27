@@ -152,3 +152,4 @@ cython_debug/
 #.idea/
 
 kaggle_output/
+kaggle_output.zip

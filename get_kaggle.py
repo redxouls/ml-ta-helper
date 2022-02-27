@@ -4,6 +4,7 @@
 
 
 import os
+import time
 import re
 import argparse
 import json
@@ -51,8 +52,16 @@ def get_student_data(args):
                 print(student_id)
                 leaderboard[student_id] = {'public': float(
                     team['publicScore']), 'private': float(team['privateScore'])}
+            filename = os.path.join(args.single_path, '{}.json'.format(team_id))
+            if (os.path.exists(filename)):
+                with open(filename, 'r') as f:
+                    data = json.load(f)
+                    if data.get("wasSuccessful", True):
+                        print("Skip: already dowloaded...")
+                        continue
             command = make_curl_command(args, 'single', {"team_id": team_id})
             os.system(command)
+            time.sleep(5)
     with open(os.path.join(args.output_path, 'leaderboard.json'), 'w') as f:
         json.dump(leaderboard, f)
     with open(os.path.join(args.output_path, 'id2name.json'), 'w') as f:
