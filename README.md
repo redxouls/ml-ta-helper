@@ -3,6 +3,7 @@
 
 A simple toolkit for accessing data from Kaggle and post-process for calculating student grades and finding potential cheatings 📝🎓.
 
+The codes are created by Chien-yu Huang & Heng-Jui Chang and modified by Redxouls Chen & Guang-Ming Chen
 
 ## Requirements
 ```
@@ -12,7 +13,7 @@ No extra packages needed.
 
 ## Installation
 ```
-git clone https://github.com/cyhuang-tw/ml-ta-helper.git
+git clone https://github.com/guangming/ml-ta-helper.git
 ```
 
 ## Usage
@@ -21,7 +22,7 @@ git clone https://github.com/cyhuang-tw/ml-ta-helper.git
 * **Public Leaderboard**:  
   Directly dowload the `.csv` file from Kaggle.
 * **Private Leaderboard**:  
-  Download the whole webpage as a plain text file.
+  Directly dowload the `.csv` file from Kaggle.
 
 
 ###  Calculate Kaggle Scores
@@ -29,7 +30,7 @@ git clone https://github.com/cyhuang-tw/ml-ta-helper.git
 ```
 python3 collect_score.py \
     --public <public leaderboard>.csv \
-    --private <private leaderboard>.html \
+    --private <private leaderboard>.csv \
     --students <student list>.csv \
     --publ-bl <public baselines (from easy to hard)> \
     --priv-bl <private baselines (from easy to hard)> \
