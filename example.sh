@@ -19,10 +19,10 @@ python3 find_cheating.py \
     --id2n kaggle_output/id2name.json \
     --output ${cheat}
 
-# python3 convert_to_ntucool.py \
-#     --orig-file ML2021_hw1_score_original.csv \
-#     --id-col 11 \
-#     --score-col 14 \
-#     --cool-grade ntucool_20210407.csv \
-#     --cool-output ntucool_20210407_hw1.csv \
-#     --title "HW01 total score"
+python3 convert_to_ntucool.py \
+    --orig-file hw1_kaggle_score.csv \
+    --id-col 1 \
+    --score-col 4 \
+    --cool-grade 2022-02-28T1413_成績-機器學習_(EE5184).csv \
+    --cool-output ntucool_hw1.csv \
+    --title "HW01 Kaggle Score"

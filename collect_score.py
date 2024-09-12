@@ -2,6 +2,8 @@
     Author: Heng-Jui Chang
 '''
 
+# change to just use the raw data downloaded from Kaggle of public and private
+
 import argparse
 import csv
 
@@ -30,10 +32,9 @@ def single_score_dict(team_name, score, lb='public'):
         f'{lb}_score': score
     }
 
-
 def read_public(path):
     ''' Parse public leaderboard's .csv file '''
-    with open(path, 'r') as fp:
+    with open(path, 'r', encoding="utf-8") as fp:
         rows = csv.reader(fp)
         data = {}
         students, repeat, invalid, ascending, prev_score = 0, 0, 0, -1, -1
@@ -59,7 +60,7 @@ def read_public(path):
                     ascending = score > prev_score
                 else:
                     prev_score = score
-
+        # print(data)
         print(f'Repeated students: {repeat_id}')
         print(
             f'Public set: {students} students, {repeat} repeated IDs, {invalid} invalid IDs')
@@ -68,35 +69,53 @@ def read_public(path):
         return data, students + repeat + invalid, ascending
 
 
-def read_private(path, data, contestants):
-    ''' Parse public leaderboard's .txt/.html file '''
-    with open(path, 'r') as fp:
-        start = False
-        prev_name = ''
-        cnt = 0
-        for line in fp:
-            if cnt == contestants:
-                break
-            line = line.strip()
-            if line[:6] == '#\t△pub':
-                start = True
-                continue
-            elif not start or line == '':
-                continue
+# def read_private(path, data, contestants):
+#     ''' Parse public leaderboard's .txt/.html file '''
+#     with open(path, 'r', encoding="utf-8") as fp:
+#         start = False
+#         prev_name = ''
+#         cnt = 0
+#         for line in fp:
+#             if cnt == contestants:
+#                 break
+#             line = line.strip()
+#             if line[:6] == '#\t△pub':
+#                 start = True
+#                 continue
+#             elif not start or line == '':
+#                 continue
 
-            if line[0].isdigit():
-                cnt += 1
-                team_name = normalize_team_name(line.split('\t')[2])
-                name = get_student_id(team_name)
-                prev_name = name
-                if name == '' or data[name]['team_name'] != team_name:
-                    prev_name = ''
-                    if name != '' and data[name]['team_name'] != team_name:
-                        print(data[name]['team_name'] + '\n' + team_name)
-                    continue
-                data[name]['private_score'] = 0.0
-            elif line[0] == '<' and prev_name != '':
-                data[name]['private_score'] = float(line.split('\t')[1])
+#             if line[0].isdigit():
+#                 cnt += 1
+#                 team_name = normalize_team_name(line.split('\t')[2])
+#                 name = get_student_id(team_name)
+#                 prev_name = name
+#                 if name == '' or data[name]['team_name'] != team_name:
+#                     prev_name = ''
+#                     if name != '' and data[name]['team_name'] != team_name:
+#                         print(data[name]['team_name'] + '\n' + team_name)
+#                     continue
+#                 data[name]['private_score'] = 0.0
+#             elif line[0] == '<' and prev_name != '':
+#                 data[name]['private_score'] = float(line.split('\t')[1])
+#         return data
+
+def read_private(path, data, contestants):
+    ''' Parse private leaderboard's .csv file '''
+    with open(path, 'r', encoding="utf-8") as fp:
+        count = 0 
+        rows = csv.reader(fp)      
+        for i, row in enumerate(rows):
+            if i == 0:
+                continue
+            name = get_student_id(row[1])
+            score = float(row[3])
+            
+            if data.get(name, False)==False:
+                continue    
+            else:
+                data[name]['private_score'] = score
+
         return data
 
 
@@ -104,7 +123,7 @@ def read_student_list(path):
     ''' Parse student list from a .csv file 
         format should be <index>,<student ID>,<original ID>
     '''
-    with open(path, 'r') as fp:
+    with open(path, 'r', encoding="utf-8") as fp:
         rows = csv.reader(fp)
         student_list = []
         for i, row in enumerate(rows):
@@ -122,11 +141,11 @@ def score(data, student_list, publ_bl, priv_bl, rev=1):
     ''' Calculate students' score '''
     results = []
     for student in student_list:
-        sid = student['ID']
+        sid = student['ID'].lower()
         res = [student['index'], student['orig_ID']]
-        if data.get(sid, None):
+        if data.get(sid, False)!=False:
             total_score = 0
-            res.append(data[sid]['public_score'])
+            res.append(data[sid]['public_score']) 
             for b in publ_bl:
                 total_score += int(data[sid]['public_score'] * rev >= b * rev)
             res.append(data[sid]['private_score'])
